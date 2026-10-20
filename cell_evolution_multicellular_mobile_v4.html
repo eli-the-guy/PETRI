@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cell Evolution — Full Steam Preview</title>
+<style>
+:root{color-scheme:dark;--bg:#070b14;--panel:#111a2a;--line:#2a3b58;--text:#eef5ff;--muted:#9eafcc;--cyan:#66e6f2;--green:#8df0ac;--gold:#ffd37b;--pink:#ff8cc9;--purple:#c7a0ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#1b3150,#080d18 56%);color:var(--text);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:1400px;margin:auto;padding:18px 14px 38px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}h1{font-size:clamp(25px,4vw,40px);letter-spacing:-1.2px;margin:0}h1 span{color:var(--cyan)}.sub{margin:4px 0 0;color:var(--muted)}.pill{border:1px solid #3a5c78;background:#12263b;color:var(--cyan);padding:7px 10px;border-radius:99px;font-size:11px;font-weight:850}
+.topstats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}.stat{background:#101a2a;border:1px solid var(--line);border-radius:12px;padding:9px 11px}.stat b{display:block;font-size:23px;letter-spacing:-.5px}.stat span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr);gap:12px}.panel{min-width:0;background:linear-gradient(145deg,#141f32f5,#0d1422f7);border:1px solid var(--line);border-radius:16px;padding:13px;box-shadow:0 16px 40px #0003}h2{font-size:16px;margin:0 0 10px}h3{font-size:13px;margin:0 0 8px;color:#dce8ff}.small{font-size:11px;color:var(--muted)}#world{display:block;width:100%;height:auto;border:1px solid #2a3d58;border-radius:12px;background:#071321;touch-action:none;cursor:grab}#world:active{cursor:grabbing}.mobile-camera{display:none;align-items:center;justify-content:space-between;gap:10px;margin:9px 0}.dpad{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,38px);gap:4px}.dpad button{padding:0;font-size:17px;touch-action:none;user-select:none}.dpad .up{grid-column:2;grid-row:1}.dpad .left{grid-column:1;grid-row:2}.dpad .down{grid-column:2;grid-row:2}.dpad .right{grid-column:3;grid-row:2}.zoom-pad{display:flex;gap:6px}.zoom-pad button{min-width:42px;min-height:42px;padding:6px;font-size:18px;touch-action:manipulation}@media(max-width:700px),(pointer:coarse){.mobile-camera{display:flex}#world{touch-action:none}.help{font-size:12px}}
+.controls{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}button,select{font:inherit;color:var(--text);background:#1a2a43;border:1px solid #405776;border-radius:9px;padding:9px 11px;font-weight:750;cursor:pointer}button:hover{filter:brightness(1.15)}button.primary{background:linear-gradient(100deg,#50d9e8,#8debd1);border:0;color:#07131b}button.warn{border-color:#8d6340;background:#33261b}button:disabled{opacity:.4}
+.substats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.box{background:#0a1220;border:1px solid #253650;border-radius:11px;padding:10px;min-width:0}.range{width:100%;accent-color:var(--cyan)}.range-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}.tab{padding:7px 9px;font-size:12px}.tab.active{background:#164052;border-color:#4c9aaa;color:#8ef4ff}
+.view{display:none}.view.active{display:block}.genegrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.gene{display:flex;align-items:center;gap:6px;padding:7px;background:#111e31;border:1px solid #293b56;border-radius:8px;font-size:12px}.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}.tag{display:inline-block;border:1px solid #36516b;background:#15243a;color:#d8eaff;padding:4px 7px;margin:2px;border-radius:7px;font-size:11px}.tag.mut{border-color:#9c7a37;color:var(--gold)}.bar{height:6px;background:#26344a;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--green)}
+.list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow:auto}.entry{background:#0a1220;border-left:3px solid #3c5574;border-radius:0 7px 7px 0;padding:7px 9px;font-size:11px}.entry.good{border-color:var(--green)}.entry.bad{border-color:var(--pink)}.species{background:#0a1220;border:1px solid #293a54;border-radius:11px;padding:10px;margin-bottom:7px}.species-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.swatch{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}.species p{margin:5px 0;font-size:11px;color:var(--muted)}
+.inspector{min-height:90px}.help{font-size:11px;line-height:1.5;color:#b5c4df;margin:8px 0 0}.badge{display:inline-block;border:1px solid #37506d;border-radius:99px;padding:3px 7px;font-size:10px;color:var(--cyan);margin:2px}
+footer{text-align:center;color:var(--muted);font-size:11px;margin-top:14px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.topstats{grid-template-columns:repeat(3,1fr)}}@media(max-width:480px){.topstats{grid-template-columns:repeat(2,1fr)}.panel{padding:9px}.substats{grid-template-columns:1fr}.genegrid{grid-template-columns:1fr 1fr}}
+</style></head>
+<body><main>
+<header><div><h1>🧬 CELL <span>EVOLUTION</span></h1><p class="sub">Full-steam natural selection sandbox · v1.0 preview</p></div><div class="pill">ONE CELL · OPEN ENDED EVOLUTION</div></header>
+<div class="topstats">
+<div class="stat"><b id="pop">1</b><span>Living cells</span></div><div class="stat"><b id="speciesCount">1</b><span>Known species</span></div><div class="stat"><b id="generation">0</b><span>Highest generation</span></div><div class="stat"><b id="deaths">0</b><span>Total deaths</span></div><div class="stat"><b id="time">0:00</b><span>Sim time</span></div>
+</div>
+<div class="layout">
+<section class="panel">
+<h2>01 / Ecosystem</h2><canvas id="world" width="900" height="570" aria-label="Interactive cell ecosystem"></canvas>
+<div class="mobile-camera" aria-label="Mobile camera controls"><div class="dpad"><button class="up" data-cam="w" aria-label="Pan up">▲</button><button class="left" data-cam="a" aria-label="Pan left">◀</button><button class="down" data-cam="s" aria-label="Pan down">▼</button><button class="right" data-cam="d" aria-label="Pan right">▶</button></div><div class="zoom-pad"><button id="zoomOut" aria-label="Zoom out">−</button><button id="zoomIn" aria-label="Zoom in">＋</button></div></div>
+<div class="controls"><button id="toggle" class="primary">▶ Start</button><button id="step">Step 1 second</button><button id="foodBtn">Scatter food</button><button id="restart" class="warn">Restart from one cell</button></div>
+<div class="substats">
+<div class="box"><h3>Simulation speed</h3><input id="speed" class="range" type="range" min="1" max="8" value="2"><div class="range-row"><span>Slow</span><b id="speedVal">2×</b><span>Fast</span></div></div>
+<div class="box"><h3>Food regeneration</h3><input id="foodRate" class="range" type="range" min="0" max="15" value="5"><div class="range-row"><span>Scarce</span><b id="foodVal">5 / sec</b><span>Abundant</span></div></div>
+<div class="box"><h3>Mutation chance</h3><input id="mutationRate" class="range" type="range" min="0" max="50" value="20"><div class="range-row"><span>0%</span><b id="mutationVal">20%</b><span>50%</span></div></div>
+<div class="box"><h3>World conditions</h3><label class="small"><input id="harsh" type="checkbox"> Harsh climate (higher metabolism)</label><br><label class="small"><input id="showTrails" type="checkbox"> Show movement trails</label></div>
+</div>
+<p class="help">The world is 8× wider and 8× taller than the viewport (64× the area), with an 800-cell population cap. Drag or swipe the world, hold WASD for smooth camera movement, or use the mobile camera pad. Scroll or use the zoom buttons to zoom in and out. The camera stops at world edges. Starts with exactly one cell. It must find food and build enough energy to reproduce. Each cell has 10 distinct genes; mutations can create new combinations and species. Connect-gene cells can form locked multicellular colonies after each cell is at least 3 seconds old, share food energy with the hungriest member, and attract compatible cells across species. Connect and Herding genes are more common. Herding cells coordinate food access within their own species. There is no automatic population rescue: if the lineage dies out, restart to try a new evolutionary run.</p>
+</section>
+<section class="panel">
+<div class="tabs"><button class="tab active" data-tab="inspectView">Cell inspector</button><button class="tab" data-tab="speciesView">Species</button><button class="tab" data-tab="genesView">Gene library</button><button class="tab" data-tab="logView">Event log</button></div>
+<div class="view active" id="inspectView">
+<h2>02 / Selected cell</h2><div class="box inspector" id="inspector"><span class="small">Click a cell in the ecosystem to inspect it.</span></div>
+<div style="height:10px"></div><h3>Population gene frequency</h3><div class="box" id="frequencies"><span class="small">Waiting for population data…</span></div>
+</div>
+<div class="view" id="speciesView"><h2>03 / Species explorer</h2><p class="small">A lineage becomes a new species when 50% or more of its ten genes differ from the founding genome of its current species (at least 5 genes). Species records remain after extinction.</p><div id="speciesList"></div></div>
+<div class="view" id="genesView"><h2>04 / Gene library</h2><p class="small">Genes are heritable traits. Every cell has exactly ten distinct genes selected from this expanded pool.</p><div id="geneLibrary"></div></div>
+<div class="view" id="logView"><h2>05 / Evolution events</h2><div class="list" id="log"><div class="entry">Origin: one randomly generated cell. The experiment is ready.</div></div></div>
+</section></div>
+<footer>Local standalone simulation · Random outcomes · Species are defined by gene-set distance from their founding genome</footer>
+</main>
+<script>
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id),canvas=$("world"),ctx=canvas.getContext("2d"),W=canvas.width,H=canvas.height;
+const WORLD_W=7200,WORLD_H=4560,POP_CAP=800;let zoom=1,camX=(WORLD_W-W)/2,camY=(WORLD_H-H)/2;
+const clampCamera=()=>{camX=clamp(camX,0,Math.max(0,WORLD_W-W/zoom));camY=clamp(camY,0,Math.max(0,WORLD_H-H/zoom))};
+const genes=[
+{name:"Move",color:"#72b8ff",desc:"Increases movement speed, with a small energy cost."},
+{name:"Glow",color:"#d4a0ff",desc:"Bright warning glow deters ordinary attackers and slightly improves food detection with Sense."},
+{name:"Split",color:"#ff8fc7",desc:"Lowers the energy threshold and cost for reproduction."},
+{name:"Repair",color:"#9ee5a6",desc:"Reduces baseline energy consumption."},
+{name:"Sense",color:"#ffe18a",desc:"Detects food from farther away when Rotate is present."},
+{name:"Shell",color:"#c6d2e7",desc:"Protective shell reduces incoming attack damage and helps in harsh climate."},
+{name:"Store",color:"#ffb76c",desc:"Increases maximum energy and food gain."},
+{name:"Pulse",color:"#65e8d9",desc:"Briefly boosts movement after eating."},
+{name:"Rotate",color:"#ff9a6b",desc:"Steering response from -1 to +1. Positive turns toward food; negative turns away. Works with Sense."},
+{name:"Digest",color:"#f0ce67",desc:"Extracts more energy from each food bit."},
+{name:"Efficient",color:"#a7f0d0",desc:"Lowers metabolism."},
+{name:"Sprint",color:"#ff7c91",desc:"Fast movement with a larger energy cost."},
+{name:"Scout",color:"#87e2f2",desc:"Extends food detection distance when paired with Sense."},
+{name:"Camouflage",color:"#91bd8b",desc:"Dims the cell and makes it harder to target from a distance."},
+{name:"Anchor",color:"#b3bde8",desc:"Slows movement and reduces energy consumption."},
+{name:"Filter",color:"#f4ae72",desc:"Increases the radius at which a cell can collect food."},
+{name:"Attack",color:"#ff596e",desc:"Strikes nearby cells, draining their energy. Attacks have a cooldown."},
+{name:"Siphon",color:"#c084fc",desc:"Steals energy from a nearby cell and transfers most of it to the siphoner."},
+{name:"Armor",color:"#a9b8ca",desc:"Strong armor greatly reduces incoming attack damage."},
+{name:"Spines",color:"#f59e0b",desc:"Reflects part of an attack's damage back at the attacker."},
+{name:"Venom",color:"#b4f36a",desc:"Adds lingering energy drain to successful attacks."},
+{name:"Fearless",color:"#fb7185",desc:"Ignores Glow's warning deterrent and hits harder when attacking."},
+{name:"Magnet",color:"#60a5fa",desc:"Pulls food into a wider collection radius."},
+{name:"Recycler",color:"#34d399",desc:"Leaves extra food behind when the cell dies, helping nearby survivors."},
+{name:"Regrow",color:"#86efac",desc:"Slowly restores energy, improving long-term survival."},
+{name:"Overdrive",color:"#ff4fd8",desc:"Extremely rare powerhouse: moves faster and deals extra attack damage, but burns energy quickly."},
+{name:"Phoenix",color:"#ff9d45",desc:"Mythic survival gene: once per cell lifetime, prevents death and restores a burst of energy."},
+{name:"Worldshaper",color:"#f8e16b",desc:"Ultra-rare adaptation: greatly improves food sensing and energy gained from food."},
+{name:"Connect",color:"#fb78ff",desc:"Rare multicellular gene. Attracts other Connect cells, even across species. Contact forms a permanent bond: linked cells lock together and route food energy to the hungriest member."},
+{name:"Herding",color:"#8ee7ff",desc:"Coordinates food access with same-species Herding cells. When a hungrier herd member is heading for the same food, this cell waits nearby and lets it eat first."},
+{name:"ColonyDigest",color:"#8cf5bd",desc:"Requires Connect and a living bond. Increases food energy delivered to the colony's hungriest member."},
+{name:"SharedShield",color:"#b9c8e8",desc:"Requires Connect and a living bond. Reduces damage to all bonded colony members."},
+{name:"Relay",color:"#f3a8ff",desc:"Requires Connect. Improves energy transfer to the hungriest connected cell and helps colonies balance energy."},
+{name:"ColonyRepair",color:"#9df7e1",desc:"Requires Connect and a bond. Slowly restores energy to the lowest-energy colony member."},
+{name:"Brood",color:"#ffb6d5",desc:"Requires Connect and a bond. Makes reproduction cheaper when the cell belongs to a colony."},
+{name:"BondSense",color:"#f0c8ff",desc:"Requires Connect. Attracts bonded cells toward nearby unlinked Connect cells from any species, helping colonies grow."},
+{name:"PackHunter",color:"#ff7c8d",desc:"Requires Connect and a bond. Adds attack power when at least one bonded colony member is nearby."},
+{name:"Quorum",color:"#ffe38a",desc:"Requires Connect and a bond. Bonded members get a small metabolism discount for each nearby colony partner."},
+{name:"Beacon",color:"#7be7ff",desc:"Detects food from farther away, but its bright signal costs a little extra energy."},
+{name:"Spore",color:"#b6f28d",desc:"Leaves extra food when the cell dies; a connected colony can benefit from the nutrient burst."},
+{name:"ToxinFilter",color:"#c2f7a5",desc:"Reduces lingering venom drain and helps defend against toxin-based attackers."},
+{name:"Feeder",color:"#ffc78f",desc:"Collects food from a wider radius and gains a little extra energy from it."},
+{name:"Mimic",color:"#a6b7ff",desc:"Copies the dominant color of its species and slightly reduces targeting range for attackers."},
+{name:"Glider",color:"#8cd8ff",desc:"Moves efficiently over long distances, spending less energy while travelling."},
+{name:"Thermal",color:"#ffad7a",desc:"Resists harsh-climate metabolism and reduces energy loss in difficult conditions."},
+{name:"ThickMembrane",color:"#cbd5e1",desc:"A modest all-purpose damage reduction, stacking with other defensive genes."},
+{name:"Scavenger",color:"#a3f5b4",desc:"Gets a larger energy reward from food when its energy is low."},
+{name:"Alarm",color:"#ff9de2",desc:"Warns nearby same-species cells when attacked, briefly increasing their movement speed."},
+{name:"LongReach",color:"#94a3ff",desc:"Collects food from a longer distance and helps bonded colonies reach food without breaking apart."},
+{name:"Stabilizer",color:"#b6c5d8",desc:"Reduces random turning, making movement more stable and efficient."},
+{name:"Burst",color:"#ffdc70",desc:"Occasionally bursts forward when food is detected, at a small energy cost."},
+{name:"SporeCloud",color:"#d2f58c",desc:"When threatened, slightly weakens nearby attackers; strongest when paired with Shell or Connect."}
+];
+const geneMap=Object.fromEntries(genes.map(g=>[g.name,g]));
+const WILD=genes.map(g=>g.name);
+// Higher weights mean genes are more likely in founder genomes and mutations.
+const geneWeights={Move:5,Glow:4,Split:4,Repair:5,Sense:4,Shell:3.4,Store:4, Pulse:3,Rotate:3,Digest:4,Efficient:5,Sprint:3,Scout:3,Camouflage:2.7,Anchor:2.8,Filter:3.2,Attack:1.5,Siphon:1,Armor:1.7,Spines:1.7,Venom:1,Fearless:1.25,Magnet:3,Recycler:2.5,Regrow:3,Overdrive:.35,Phoenix:.18,Worldshaper:.07,Connect:.9,Herding:3.2,ColonyDigest:1.25,SharedShield:1.1,Relay:.95,ColonyRepair:1.2,Brood:1.3,BondSense:1.6,PackHunter:1.05,Quorum:.9,Beacon:2.2,Spore:2.4,ToxinFilter:1.5,Feeder:2.8,Mimic:2.2,Glider:2.7,Thermal:2.1,ThickMembrane:2.2,Scavenger:2.6,Alarm:1.8,LongReach:2.1,Stabilizer:2.8,Burst:1.9,SporeCloud:1.4};
+function weightedPick(items){const total=items.reduce((sum,g)=>sum+(geneWeights[g]||1),0);let r=Math.random()*total;for(const g of items){r-=geneWeights[g]||1;if(r<=0)return g}return items[items.length-1]}
+function rarityLabel(g){const w=geneWeights[g]||1;return w>=4.5?'COMMON':w>=3.5?'UNCOMMON':w>=2.5?'RARE':w>=1.2?'EPIC':w>=.3?'LEGENDARY':w>=.15?'MYTHIC':'DIVINE'}
+function rarityColor(g){return ({COMMON:'#9ee5a6',UNCOMMON:'#72b8ff',RARE:'#c084fc',EPIC:'#ff8fc7',LEGENDARY:'#ffd166',MYTHIC:'#ff9d45',DIVINE:'#ff4fd8'})[rarityLabel(g)]||'#9eafcc'}
+let cells=[],foods=[],species=[],links=[],nextCellId=1,nextSpeciesId=1,running=false,raf=0,last=0,simTime=0,foodClock=0,deaths=0,highestGen=0,selectedId=null,mutationChance=.2,foodRate=5,harsh=false,showTrails=true;
+const rand=(a,b)=>a+Math.random()*(b-a),clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),pick=a=>a[Math.floor(Math.random()*a.length)],shuffle=a=>[...a].sort(()=>Math.random()-.5);
+function randomGenes(){const pool=[...WILD],out=[];while(out.length<10&&pool.length){const g=weightedPick(pool);out.push(g);pool.splice(pool.indexOf(g),1)}return out}
+function has(c,g){return c.genes.includes(g)}
+function distGenes(a,b){return a.genes.filter(g=>!b.includes(g)).length}
+function createSpecies(genome,parentId=null,gen=0){const s={id:nextSpeciesId++,name:`Species ${nextSpeciesId-1}`,genome:[...genome],population:0,originGen:gen,originParent:parentId,color:`hsl(${Math.floor(rand(0,360))} 78% 69%)`,extinct:false};species.push(s);return s}
+function chooseSpecies(genome,parentSpecies,gen,parentId){
+ // Keep the parent's species unless the descendant differs from its founding genome by >=3 genes.
+ if(parentSpecies && distGenes({genes:genome},parentSpecies.genome)<5)return parentSpecies;
+ // If a mutation moves the genome to a known species genome's neighborhood, use the closest valid species.
+ let best=null,bestD=99;
+ for(const s of species){const d=distGenes({genes:genome},s.genome);if(d<5&&d<bestD){best=s;bestD=d}}
+ if(best)return best;
+ const s=createSpecies(genome,parentId,gen);log(`New species ${s.name} emerged in generation ${gen}.`,"good");return s;
+}
+function linked(a,b){return links.some(l=>(l.a===a.id&&l.b===b.id)||(l.a===b.id&&l.b===a.id))}
+function connectedGroup(c){const found=new Set([c.id]),queue=[c.id];while(queue.length){const id=queue.shift();for(const l of links){const next=l.a===id?l.b:l.b===id?l.a:null;if(next!=null&&!found.has(next)){found.add(next);queue.push(next)}}}return cells.filter(x=>found.has(x.id))}
+function hasLivingBond(c){return has(c,"Connect")&&connectedGroup(c).length>1}
+function colonyLeader(c){const group=connectedGroup(c);return group.length>1?group.reduce((a,b)=>a.id<b.id?a:b):c}
+function tryConnect(){for(let i=0;i<cells.length;i++){const a=cells[i];if(!has(a,"Connect")||a.age<3)continue;for(let j=i+1;j<cells.length;j++){const b=cells[j];if(!has(b,"Connect")||b.age<3||linked(a,b))continue;if(Math.hypot(a.x-b.x,a.y-b.y)<13){links.push({a:a.id,b:b.id,dx:b.x-a.x,dy:b.y-a.y});log(`Cells #${a.id} and #${b.id} formed a multicellular bond across species boundaries.`,"good")}}}}
+function constrainLinks(){links=links.filter(l=>cells.some(c=>c.id===l.a)&&cells.some(c=>c.id===l.b));for(let pass=0;pass<3;pass++){for(const l of links){const a=cells.find(c=>c.id===l.a),b=cells.find(c=>c.id===l.b);if(!a||!b)continue;const mx=(a.x+b.x-l.dx)/2,my=(a.y+b.y-l.dy)/2;a.x=clamp(mx,7,WORLD_W-7);a.y=clamp(my,7,WORLD_H-7);b.x=clamp(a.x+l.dx,7,WORLD_W-7);b.y=clamp(a.y+l.dy,7,WORLD_H-7)}}}
+function routeColonyFood(eater,gain){const group=connectedGroup(eater);if(group.length<2)return {cell:eater,gain};const recipient=group.reduce((best,c)=>c.energy/maxEnergy(c)<best.energy/maxEnergy(best)?c:best,group[0]);const boosted=gain*(group.some(c=>has(c,"ColonyDigest"))?1.28:1)*(group.some(c=>has(c,"Relay"))?1.15:1);return {cell:recipient,gain:boosted}}
+function makeCell(x,y,genome,energy,gen=0,speciesObj=null,parentId=null,inheritedRotate=null){
+ const c={id:nextCellId++,x,y,angle:rand(0,Math.PI*2),genes:[...genome],energy,max:has({genes:genome},"Store")?140:100,age:0,gen,speciesId:0,trail:[],pulse:0,attackCooldown:rand(0,.5),venom:0,phoenixUsed:false,turnBias:rand(-.2,.2),rotateValue:inheritedRotate==null?rand(-1,1):clamp(inheritedRotate+rand(-.12,.12),-1,1)};
+ c.species=speciesObj||createSpecies(genome,parentId,gen);c.speciesId=c.species.id;c.species.population++;c.species.extinct=false;cells.push(c);highestGen=Math.max(highestGen,gen);return c;
+}
+function addFood(n=1){for(let i=0;i<n;i++)foods.push({x:rand(10,WORLD_W-10),y:rand(10,WORLD_H-10),r:rand(2.2,4)})}
+function addFoodNear(x,y,n=1,spread=260){for(let i=0;i<n;i++)foods.push({x:clamp(x+rand(-spread,spread),10,WORLD_W-10),y:clamp(y+rand(-spread,spread),10,WORLD_H-10),r:rand(2.2,4)})}
+function log(msg,type=""){const e=document.createElement("div");e.className="entry "+type;e.textContent=msg;$("log").prepend(e);while($("log").children.length>100)$("log").lastChild.remove()}
+function mutation(parent){
+ const genome=[...parent.genes];let changes=[];
+ if(Math.random()<mutationChance){
+  const indices=shuffle(genome.map((g,i)=>i)).slice(0,2);
+  for(const i of indices){const old=genome[i],choices=WILD.filter(g=>!genome.includes(g));if(choices.length){const next=weightedPick(choices);genome[i]=next;changes.push(`${old} → ${next}`)}}
+ }
+ return {genome,changes};
+}
+function maxEnergy(c){return has(c,"Store")?140:100}
+function moveSpeed(c){let v=has(c,"Move")?42:25;if(has(c,"Sprint"))v*=1.5;if(has(c,"Overdrive"))v*=1.35;if(has(c,"Anchor"))v*=.62;if(has(c,"Glider"))v*=1.08;return v}
+function detection(c){if(!has(c,"Sense"))return has(c,"Worldshaper")?58:42;let d=has(c,"Scout")?155:has(c,"Rotate")?110:72;if(has(c,"Glow"))d+=18;if(has(c,"Worldshaper"))d+=75;if(has(c,"Beacon"))d+=42;return d}
+function metabolism(c){let v=harsh?2.1:1.25;if(has(c,"Move"))v+=.15;if(has(c,"Sprint"))v+=.75;if(has(c,"Overdrive"))v+=.55;if(has(c,"Repair"))v-=.35;if(has(c,"Efficient"))v-=.5;if(has(c,"Anchor"))v-=.2;if(has(c,"Shell")&&harsh)v-=.45;if(has(c,"Glow"))v+=.08;if(has(c,"Beacon"))v+=.28;if(has(c,"Glider"))v-=.18;if(has(c,"Thermal")&&harsh)v-=.65;if(has(c,"Quorum")&&hasLivingBond(c))v-=Math.min(.35,(connectedGroup(c).length-1)*.08);return Math.max(.25,v)}
+function eatGain(c){let v=has(c,"Store")?27:22;if(has(c,"Digest"))v+=15;if(has(c,"Glow"))v+=3;if(has(c,"Worldshaper"))v+=12;if(has(c,"Feeder"))v+=5;if(has(c,"Scavenger")&&c.energy<maxEnergy(c)*.45)v+=7;return v}
+function damageCell(target,amount,attacker,reflect=true){
+ let damage=amount;
+ if(has(target,"Shell"))damage*=.8;
+ if(has(target,"Armor"))damage*=.55;if(has(target,"ThickMembrane"))damage*=.88;if(has(target,"SharedShield")&&hasLivingBond(target))damage*=.72;
+ if(has(target,"Glow")&&attacker&&!has(attacker,"Fearless"))damage*=.8;
+ target.energy-=damage;
+ if(has(target,"Spines")&&attacker&&reflect)attacker.energy-=damage*.4;if(has(target,"SporeCloud")&&attacker){attacker.energy-=1.5;if(has(target,"Connect")&&hasLivingBond(target))attacker.energy-=1.5;}if(has(target,"ToxinFilter"))target.venom=Math.max(0,(target.venom||0)-.5);
+ if(has(attacker||{genes:[]},"Venom"))target.venom=Math.max(target.venom,has(target,"ToxinFilter")?1.1:2.5);
+ return damage;
+}
+function combat(c,dt){
+ c.attackCooldown=Math.max(0,(c.attackCooldown||0)-dt);
+ if(!has(c,"Attack")&&!has(c,"Siphon"))return;
+ if(c.attackCooldown>0)return;
+ let target=null,best=(has(c,"Attack")?23:15)+(has(c,"LongReach")?5:0);
+ for(const other of cells){
+  if(other===c||other.energy<=0)continue;
+  const d=Math.hypot(other.x-c.x,other.y-c.y);
+  if((has(other,"Camouflage")||has(other,"Mimic"))&&d>13)continue;
+  if(has(other,"Glow")&&!has(c,"Fearless"))continue;
+  if(d<best){best=d;target=other}
+ }
+ if(!target)return;
+ if(has(c,"Attack")){
+  const amount=(has(c,"Fearless")?15:11)+(has(c,"Overdrive")?5:0)+(has(c,"PackHunter")&&hasLivingBond(c)?4:0);
+  damageCell(target,amount,c,true);
+  if(has(c,"Siphon")){const stolen=Math.min(5,Math.max(0,target.energy));target.energy-=stolen;c.energy=Math.min(maxEnergy(c),c.energy+stolen*.7)}
+  log(`Cell #${c.id} attacked cell #${target.id}${has(c,"Venom")?" with venom":""}.`);
+ }else{
+  const stolen=Math.min(6,Math.max(0,target.energy));target.energy-=stolen;c.energy=Math.min(maxEnergy(c),c.energy+stolen*.72);
+  if(has(c,"Venom"))target.venom=Math.max(target.venom,1.5);
+ }
+ c.attackCooldown=has(c,"Attack")?(has(c,"Fearless")?1.45:1.15):1.55;
+}
+function reproduce(c){
+ const bonded=hasLivingBond(c),threshold=has(c,"Split")?68:82,cost=(has(c,"Split")?24:32)-(bonded&&has(c,"Brood")?8:0);
+ if(c.energy<threshold||cells.length>=POP_CAP)return;
+ c.energy-=cost;
+ const {genome,changes}=mutation(c),gen=c.gen+1;
+ const sp=chooseSpecies(genome,c.species,gen,c.id);
+ const kid=makeCell(clamp(c.x+rand(-16,16),8,WORLD_W-8),clamp(c.y+rand(-16,16),8,WORLD_H-8),genome,Math.min(65,maxEnergy({genes:genome})),gen,sp,c.id,c.rotateValue);
+ if(changes.length)log(`Mutation in cell #${kid.id}: ${changes.join(", ")}.`,"bad");
+ if(sp.id!==c.speciesId)log(`Cell #${kid.id} belongs to ${sp.name}; ${distGenes({genes:genome},sp.genome)} founding genes differ.`,"good");
+}
+function update(dt){
+ simTime+=dt;foodClock+=dt;while(foodClock>=1){foodClock-=1;addFood(foodRate)}
+ // Newborns do not update until next frame.
+ for(const c of [...cells]){
+  c.age+=dt;c.pulse=Math.max(0,c.pulse-dt);c.venom=Math.max(0,(c.venom||0)-dt);if(c.venom>0)c.energy-=(has(c,"ToxinFilter")?.65:1.8)*dt;if(has(c,"Regrow"))c.energy=Math.min(maxEnergy(c),c.energy+.32*dt);
+  const colony=connectedGroup(c),leader=colony.length>1?colony.reduce((a,b)=>a.id<b.id?a:b):c,isColonyFollower=colony.length>1&&leader.id!==c.id;
+  let target=null,best=detection(c)*(colony.length>1&&leader.id===c.id?2.8:1);
+  for(const f of foods){const d=Math.hypot(f.x-c.x,f.y-c.y);if(d<best){best=d;target=f}}
+  let herdWaiting=false;
+  if(target&&has(c,"Herding")){for(const other of cells){if(other===c||other.speciesId!==c.speciesId||!has(other,"Herding"))continue;const sameFood=Math.hypot(other.x-target.x,other.y-target.y)<detection(other)+18;if(sameFood&&other.energy/maxEnergy(other)<c.energy/maxEnergy(c)-.03){herdWaiting=true;break}}}
+  let connectTarget=null;const connectRange=c.age>=3?(has(c,"BondSense")&&has(c,"Connect")?230:(has(c,"Connect")?150:0)):0;let connectBest=connectRange;
+  if(connectRange){for(const other of cells){if(other===c||other.age<3||!has(other,"Connect")||linked(c,other))continue;const d=Math.hypot(other.x-c.x,other.y-c.y);if(d<connectBest){connectBest=d;connectTarget=other}}}
+  const speed=herdWaiting?0:moveSpeed(c)*(c.pulse>0?1.65:1)*(has(c,"Burst")&&target?.x!=null?1.18:1)*(c.alarmBoost>0?1.25:1);
+  // A colony moves as one organism: the oldest-ID member leads, and every bonded follower
+  // keeps its position in the formation. The leader actively steers toward food and bonds.
+  if(isColonyFollower){c.angle=leader.angle;}
+  else {
+   if(connectTarget&&!herdWaiting){const desired=Math.atan2(connectTarget.y-c.y,connectTarget.x-c.x);const delta=Math.atan2(Math.sin(desired-c.angle),Math.cos(desired-c.angle));c.angle+=clamp(delta,-dt*2.4,dt*2.4)}
+   else if(target&&!herdWaiting&&(colony.length>1||(has(c,"Sense")&&has(c,"Rotate")))){
+    const dx=target.x-c.x,dy=target.y-c.y,desired=Math.atan2(dy,dx);
+    const delta=Math.atan2(Math.sin(desired-c.angle),Math.cos(desired-c.angle));
+    const turnRate=colony.length>1?Math.min(3.2,1.8+colony.length*.12):2.6;
+    const rotateValue=colony.length>1?1:clamp(c.rotateValue??rand(-1,1),-1,1);c.rotateValue=rotateValue;
+    c.angle+=clamp(delta*rotateValue,-dt*turnRate,dt*turnRate);
+   }else if(!herdWaiting)c.angle+=(has(c,"Stabilizer")?c.turnBias*.35:c.turnBias)*dt+rand(-1,1)*dt*(has(c,"Stabilizer")?.55:1.1);
+   c.x+=Math.cos(c.angle)*speed*dt;c.y+=Math.sin(c.angle)*speed*dt;
+  }
+  if(c.x<7||c.x>WORLD_W-7){c.angle=Math.PI-c.angle;c.x=clamp(c.x,7,WORLD_W-7)}
+  if(c.y<7||c.y>WORLD_H-7){c.angle=-c.angle;c.y=clamp(c.y,7,WORLD_H-7)}
+  if(showTrails){c.trail.push({x:c.x,y:c.y});if(c.trail.length>18)c.trail.shift()}else c.trail.length=0;
+  c.energy-=metabolism(c)*dt;
+  for(let i=foods.length-1;i>=0;i--){const f=foods[i],radius=(has(c,"Filter")?13:8)+(has(c,"Magnet")?8:0)+(has(c,"Feeder")?5:0)+(has(c,"LongReach")?4:0);if(Math.hypot(f.x-c.x,f.y-c.y)<radius){const routed=routeColonyFood(c,eatGain(c));routed.cell.energy=Math.min(maxEnergy(routed.cell),routed.cell.energy+routed.gain);foods.splice(i,1);if(has(c,"Pulse"))c.pulse=2;break}}
+  if(has(c,"ColonyRepair")&&hasLivingBond(c)){const group=connectedGroup(c),lowest=group.reduce((best,m)=>m.energy<best.energy?m:best,group[0]);lowest.energy=Math.min(maxEnergy(lowest),lowest.energy+.22*dt)}
+  if(has(c,"Alarm")&&c.energy<maxEnergy(c)*.4){for(const ally of cells){if(ally!==c&&ally.speciesId===c.speciesId&&Math.hypot(ally.x-c.x,ally.y-c.y)<65)ally.alarmBoost=.5}}
+  if(c.alarmBoost>0){c.alarmBoost=Math.max(0,c.alarmBoost-dt)}
+  combat(c,dt);
+  if(c.energy>=(has(c,"Split")?68:82))reproduce(c);
+ }
+ tryConnect();constrainLinks();
+ const alive=[];for(const c of cells){if(c.energy<=0&&has(c,"Phoenix")&&!c.phoenixUsed){c.phoenixUsed=true;c.energy=35;log(`Phoenix gene saved cell #${c.id} from death!`,"good");alive.push(c);continue}if(c.energy<=0){deaths++;if(has(c,"Recycler"))addFood(3);if(has(c,"Spore"))addFood(6);if(has(c,"SporeCloud"))addFood(2);c.species.population=Math.max(0,c.species.population-1);if(c.species.population===0)c.species.extinct=true;if(selectedId===c.id)selectedId=null}else alive.push(c)}cells=alive;links=links.filter(l=>cells.some(c=>c.id===l.a)&&cells.some(c=>c.id===l.b));
+}
+function draw(){
+ ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,H);ctx.fillStyle="#071321";ctx.fillRect(0,0,W,H);
+ ctx.save();ctx.scale(zoom,zoom);ctx.translate(-camX,-camY);
+ // Performance-friendly background: wider grid spacing and no per-line glow effects.
+ ctx.strokeStyle="#122238";ctx.lineWidth=1;ctx.beginPath();
+ for(let x=0;x<=WORLD_W;x+=120){ctx.moveTo(x,0);ctx.lineTo(x,WORLD_H)}
+ for(let y=0;y<=WORLD_H;y+=120){ctx.moveTo(0,y);ctx.lineTo(WORLD_W,y)}
+ ctx.stroke();ctx.strokeStyle="#344b65";ctx.lineWidth=4;ctx.strokeRect(0,0,WORLD_W,WORLD_H);
+ // Build an ID lookup once instead of searching the whole population for every bond.
+ const byId=new Map(cells.map(c=>[c.id,c]));
+ ctx.lineWidth=2;ctx.strokeStyle="#bd72d5";ctx.beginPath();
+ for(const l of links){const a=byId.get(l.a),b=byId.get(l.b);if(a&&b){ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y)}}ctx.stroke();
+ // Simple solid food dots avoid costly canvas shadows.
+ ctx.fillStyle="#8df0ac";ctx.beginPath();for(const f of foods){ctx.moveTo(f.x+f.r,f.y);ctx.arc(f.x,f.y,f.r,0,Math.PI*2)}ctx.fill();
+ for(const c of cells){const col=has(c,"Glow")?geneMap.Glow.color:has(c,"Camouflage")?"#526f61":c.species.color,sel=c.id===selectedId;
+  if(showTrails&&c.trail.length>1){ctx.beginPath();ctx.strokeStyle=col+"44";ctx.lineWidth=1;ctx.moveTo(c.trail[0].x,c.trail[0].y);for(const p of c.trail)ctx.lineTo(p.x,p.y);ctx.stroke()}
+  // Flat cell fill + outline: retain readable gene indicators without expensive glow blur.
+  ctx.beginPath();ctx.fillStyle=col+"35";ctx.strokeStyle=sel?"#ffffff":col;ctx.lineWidth=sel?2.5:1.25;ctx.arc(c.x,c.y,sel?8:6,0,Math.PI*2);ctx.fill();ctx.stroke();
+  if(has(c,"Connect")){ctx.beginPath();ctx.strokeStyle="#d98bea";ctx.lineWidth=1;ctx.arc(c.x,c.y,sel?13:10,0,Math.PI*2);ctx.stroke()}
+  if(has(c,"Shell")||has(c,"Armor")||has(c,"ThickMembrane")){ctx.beginPath();ctx.strokeStyle=has(c,"Armor")?"#cbd5e1":has(c,"ThickMembrane")?"#b6c5d8":"#9aaec4";ctx.lineWidth=1;ctx.arc(c.x,c.y,sel?11:9,0,Math.PI*2);ctx.stroke()}
+  if((c.venom||0)>0){ctx.beginPath();ctx.strokeStyle="#b4f36a";ctx.lineWidth=1;ctx.arc(c.x,c.y,12,0,Math.PI*2);ctx.stroke()}
+  ctx.beginPath();ctx.strokeStyle="#f3f7ff";ctx.lineWidth=1;ctx.moveTo(c.x,c.y);ctx.lineTo(c.x+Math.cos(c.angle)*8,c.y+Math.sin(c.angle)*8);ctx.stroke();
+ }
+ ctx.restore();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle="#8fa2c1";ctx.font="12px system-ui";ctx.fillText(`FOOD ${foods.length}  ·  CELLS ${cells.length}/${POP_CAP}  ·  BONDS ${links.length}  ·  ZOOM ${Math.round(zoom*100)}%  ·  SCROLL TO ZOOM`,12,H-12);
+}
+function tags(genome){return genome.map(g=>`<span class="tag" style="border-color:${geneMap[g].color}66;color:${geneMap[g].color}">${g}</span>`).join("")}
+function inspect(c){
+ if(!c){$("inspector").innerHTML='<span class="small">No living cells. This lineage went extinct. Restart to begin a new run.</span>';return}
+ selectedId=c.id;
+ $("inspector").innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><strong>Cell #${c.id}</strong><span class="badge">${c.species.name}</span></div><div class="small">Generation ${c.gen} · Age ${Math.floor(c.age)}s · Energy ${Math.floor(c.energy)} / ${maxEnergy(c)}</div><div class="bar" style="margin:6px 0"><i style="width:${clamp(c.energy/maxEnergy(c)*100,0,100)}%"></i></div><div>${tags(c.genes)}</div><div class="small" style="margin-top:6px">Rotate value: ${has(c,"Rotate")?((c.rotateValue??0).toFixed(2)):"no Rotate gene"} ${has(c,"Sense")&&has(c,"Rotate")?"· food steering active":""}</div><div class="small">Combat: ${has(c,"Attack")||has(c,"Siphon")?`${has(c,"Attack")?"attacker":""}${has(c,"Attack")&&has(c,"Siphon")?" + ":""}${has(c,"Siphon")?"siphoner":""}`:"non-aggressive"} · Defense: ${["Shell","Armor","Spines","Camouflage","Glow","SharedShield","ThickMembrane","ToxinFilter"].filter(g=>has(c,g)).join(", ")||"none"}</div><div class="small">Multicellular bonds: ${connectedGroup(c).length-1}${has(c,"Herding")?" · herding enabled":""}</div>`;
+}
+function updateUI(){
+ $("pop").textContent=cells.length;$("speciesCount").textContent=species.length;$("generation").textContent=highestGen;$("deaths").textContent=deaths;
+ const mm=Math.floor(simTime/60),ss=Math.floor(simTime%60);$("time").textContent=`${mm}:${String(ss).padStart(2,"0")}`;
+ const counts=Object.fromEntries(WILD.map(g=>[g,cells.filter(c=>has(c,g)).length]));
+ $("frequencies").innerHTML=WILD.map(g=>{let p=cells.length?counts[g]/cells.length*100:0;return `<div style="margin:6px 0"><div class="range-row"><span style="color:${geneMap[g].color}">${g}</span><span>${Math.round(p)}% (${counts[g]})</span></div><div class="bar"><i style="width:${p}%;background:${geneMap[g].color}"></i></div></div>`}).join("");
+ $("speciesList").innerHTML=species.slice().reverse().map(s=>`<div class="species"><div class="species-head"><strong><span class="swatch" style="background:${s.color}"></span>${s.name}</strong><span class="badge">${s.population} alive${s.extinct?" · extinct":""}</span></div><p>Founded in generation ${s.originGen}${s.originParent?` · parent cell #${s.originParent}`:" · original cell"} · ${s.genome.filter(g=>![""].includes(g)).length} founding genes</p><div>${tags(s.genome)}</div></div>`).join("")||'<span class="small">No species recorded.</span>';
+ const selected=cells.find(c=>c.id===selectedId);if(selected)inspect(selected);else if(!cells.length)inspect(null);
+}
+$("geneLibrary").innerHTML=genes.map(g=>`<div class="species"><div class="species-head"><strong style="color:${g.color}">${g.name}</strong><span class="badge" style="color:${rarityColor(g.name)};border-color:${rarityColor(g.name)}88">${rarityLabel(g.name)}</span></div><p>${g.desc}</p><div class="small">Spawn weight: ${geneWeights[g.name]} · higher weight means more likely to appear in new genomes and mutations.</div></div>`).join("");
+function frame(t){if(!running)return;let dt=Math.min(.045,(t-last)/1000||0)*Number($("speed").value);last=t;update(dt);draw();updateUI();raf=requestAnimationFrame(frame)}
+function toggle(){if(running){running=false;cancelAnimationFrame(raf);$("toggle").textContent="▶ Start"}else if(!cells.length){log("No cells remain. Restart from one cell to start a new lineage.","bad")}else{running=true;last=0;$("toggle").textContent="Ⅱ Pause";raf=requestAnimationFrame(frame)}}
+$("toggle").addEventListener("click",toggle);
+$("step").addEventListener("click",()=>{for(let i=0;i<25;i++)update(.04);draw();updateUI()});
+$("foodBtn").addEventListener("click",()=>{addFood(50);log("50 food bits scattered into the world.","good");draw();updateUI()});
+$("restart").addEventListener("click",()=>{running=false;cancelAnimationFrame(raf);$("toggle").textContent="▶ Start";cells=[];foods=[];species=[];links=[];nextCellId=1;nextSpeciesId=1;deaths=0;highestGen=0;simTime=0;foodClock=0;selectedId=null;const genome=randomGenes(),sp=createSpecies(genome,null,0);makeCell(WORLD_W/2,WORLD_H/2,genome,70,0,sp);camX=(WORLD_W-W/zoom)/2;camY=(WORLD_H-H/zoom)/2;addFood(70);addFoodNear(WORLD_W/2,WORLD_H/2,30,260);$("log").innerHTML='<div class="entry">Restarted. One cell is the sole founder of this evolutionary run.</div>';draw();updateUI()});
+$("speed").addEventListener("input",e=>$("speedVal").textContent=e.target.value+"×");
+$("foodRate").addEventListener("input",e=>{foodRate=Number(e.target.value);$("foodVal").textContent=foodRate+" / sec"});
+$("mutationRate").addEventListener("input",e=>{mutationChance=Number(e.target.value)/100;$("mutationVal").textContent=e.target.value+"%"});
+$("harsh").addEventListener("change",e=>{harsh=e.target.checked;log(harsh?"Harsh climate enabled: metabolism increased.":"Harsh climate disabled.")});
+$("showTrails").addEventListener("change",e=>showTrails=e.target.checked);
+let drag=null;
+canvas.addEventListener("pointerdown",e=>{const r=canvas.getBoundingClientRect();drag={id:e.pointerId,startX:e.clientX,startY:e.clientY,lastX:e.clientX,lastY:e.clientY,camX,camY,moved:false,rect:{width:r.width,height:r.height}};canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener("wheel",e=>{e.preventDefault();const r=canvas.getBoundingClientRect(),sx=(e.clientX-r.left)*W/r.width,sy=(e.clientY-r.top)*H/r.height;const worldX=camX+sx/zoom,worldY=camY+sy/zoom;const factor=e.deltaY<0?1.12:1/1.12;zoom=clamp(zoom*factor,.45,4);camX=worldX-sx/zoom;camY=worldY-sy/zoom;clampCamera();draw()},{passive:false});
+const cameraKeys=new Set();let cameraRaf=0,cameraLast=0;
+function cameraLoop(t){
+ const dt=Math.min(.05,(t-cameraLast)/1000||0);cameraLast=t;
+ let dx=0,dy=0;
+ if(cameraKeys.has("w"))dy-=1;if(cameraKeys.has("s"))dy+=1;
+ if(cameraKeys.has("a"))dx-=1;if(cameraKeys.has("d"))dx+=1;
+ if(dx||dy){const len=Math.hypot(dx,dy)||1;const speed=520/zoom;camX+=dx/len*speed*dt;camY+=dy/len*speed*dt;clampCamera();draw()}
+ if(cameraKeys.size)cameraRaf=requestAnimationFrame(cameraLoop);else cameraRaf=0;
+}
+function startCameraLoop(){if(!cameraRaf){cameraLast=0;cameraRaf=requestAnimationFrame(cameraLoop)}}
+window.addEventListener("keydown",e=>{
+ const key=e.key.toLowerCase();if(!["w","a","s","d","arrowup","arrowleft","arrowdown","arrowright"].includes(key))return;
+ const target=e.target;if(target&&(target.tagName==="INPUT"||target.tagName==="TEXTAREA"||target.tagName==="SELECT"||target.isContentEditable))return;
+ e.preventDefault();const mapped=({arrowup:"w",arrowleft:"a",arrowdown:"s",arrowright:"d"})[key]||key;cameraKeys.add(mapped);startCameraLoop();
+});
+window.addEventListener("keyup",e=>{const key=e.key.toLowerCase();const mapped=({arrowup:"w",arrowleft:"a",arrowdown:"s",arrowright:"d"})[key]||key;cameraKeys.delete(mapped)});
+window.addEventListener("blur",()=>cameraKeys.clear());
+document.querySelectorAll("[data-cam]").forEach(btn=>{
+ const key=btn.dataset.cam;
+ const down=e=>{e.preventDefault();cameraKeys.add(key);startCameraLoop();if(btn.setPointerCapture&&e.pointerId!==undefined){try{btn.setPointerCapture(e.pointerId)}catch(_){}}};
+ const up=e=>{e.preventDefault();cameraKeys.delete(key)};
+ btn.addEventListener("pointerdown",down);btn.addEventListener("pointerup",up);btn.addEventListener("pointercancel",up);btn.addEventListener("lostpointercapture",up);btn.addEventListener("contextmenu",e=>e.preventDefault());
+});
+function zoomAtCenter(factor){const sx=W/2,sy=H/2,wx=camX+sx/zoom,wy=camY+sy/zoom;zoom=clamp(zoom*factor,.45,4);camX=wx-sx/zoom;camY=wy-sy/zoom;clampCamera();draw()}
+$("zoomIn").addEventListener("click",()=>zoomAtCenter(1.2));
+$("zoomOut").addEventListener("click",()=>zoomAtCenter(1/1.2));
+canvas.addEventListener("pointermove",e=>{if(!drag||drag.id!==e.pointerId)return;const dx=e.clientX-drag.startX,dy=e.clientY-drag.startY;if(Math.hypot(dx,dy)>4)drag.moved=true;if(drag.moved){camX=drag.camX-dx*W/drag.rect.width/zoom;camY=drag.camY-dy*H/drag.rect.height/zoom;clampCamera();draw()}});
+function finishPointer(e){if(!drag||drag.id!==e.pointerId)return;const d=drag;drag=null;if(!d.moved){const r=canvas.getBoundingClientRect(),x=camX+(e.clientX-r.left)*W/r.width/zoom,y=camY+(e.clientY-r.top)*H/r.height/zoom;let near=null,dmin=20;for(const c of cells){const dist=Math.hypot(c.x-x,c.y-y);if(dist<dmin){near=c;dmin=dist}}if(near){inspect(near);camX=near.x-W/(2*zoom);camY=near.y-H/(2*zoom);clampCamera();draw()}}}
+canvas.addEventListener("pointerup",finishPointer);canvas.addEventListener("pointercancel",e=>{if(drag&&drag.id===e.pointerId)drag=null});
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===b.dataset.tab))}));
+const initialGenome=randomGenes(),initialSpecies=createSpecies(initialGenome,null,0);makeCell(WORLD_W/2,WORLD_H/2,initialGenome,70,0,initialSpecies);addFood(70);addFoodNear(WORLD_W/2,WORLD_H/2,30,260);draw();updateUI();
+})();
+</script></body></html>
