@@ -34,7 +34,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;margin-top:14px}
 <div class="box"><h3>Mutation chance</h3><input id="mutationRate" class="range" type="range" min="0" max="50" value="20"><div class="range-row"><span>0%</span><b id="mutationVal">20%</b><span>50%</span></div></div>
 <div class="box"><h3>World conditions</h3><label class="small"><input id="harsh" type="checkbox"> Harsh climate (higher metabolism)</label><br><label class="small"><input id="showTrails" type="checkbox"> Show movement trails</label></div>
 </div>
-<p class="help">The world is 8× wider and 8× taller than the viewport (64× the area), with an 800-cell population cap. Drag or swipe the world, hold WASD for smooth camera movement, or use the mobile camera pad. Scroll or use the zoom buttons to zoom in and out. The camera stops at world edges. Starts with exactly one cell. It must find food and build enough energy to reproduce. Each cell has 10 distinct genes; mutations can create new combinations and species. Connect-gene cells can form locked multicellular colonies after each cell is at least 3 seconds old, share food energy with the hungriest member, and attract compatible cells across species. Connect and Herding genes are more common. Herding cells coordinate food access within their own species. There is no automatic population rescue: if the lineage dies out, restart to try a new evolutionary run.</p>
+<p class="help">The world is 8× wider and 8× taller than the viewport (64× the area), with an 800-cell population cap. Drag or swipe the world, hold WASD for smooth camera movement, or use the mobile camera pad. Scroll or use the zoom buttons to zoom in and out. The camera stops at world edges. Starts with exactly one cell. It must find food and build enough energy to reproduce. Each cell has 10 distinct genes; mutations can create new combinations and species. Connect-gene cells can form locked multicellular colonies after each cell is at least 3 seconds old, share food energy with the hungriest member, and attract compatible cells across species. Connect and Herding genes are more common. Herding cells coordinate food access within their own species. Chaser cells follow nearby cells; following loops elect the highest-energy leader, and aggressive Chasers move slightly faster. There is no automatic population rescue: if the lineage dies out, restart to try a new evolutionary run.</p>
 </section>
 <section class="panel">
 <div class="tabs"><button class="tab active" data-tab="inspectView">Cell inspector</button><button class="tab" data-tab="speciesView">Species</button><button class="tab" data-tab="genesView">Gene library</button><button class="tab" data-tab="logView">Event log</button></div>
@@ -85,6 +85,7 @@ const genes=[
 {name:"Worldshaper",color:"#f8e16b",desc:"Ultra-rare adaptation: greatly improves food sensing and energy gained from food."},
 {name:"Connect",color:"#fb78ff",desc:"Rare multicellular gene. Attracts other Connect cells, even across species. Contact forms a permanent bond: linked cells lock together and route food energy to the hungriest member."},
 {name:"Herding",color:"#8ee7ff",desc:"Coordinates food access with same-species Herding cells. When a hungrier herd member is heading for the same food, this cell waits nearby and lets it eat first."},
+{name:"Chaser",color:"#ffb4e6",desc:"Follows the closest cell. If Chaser cells form a following loop, the cell with the highest energy becomes the leader and follows no one; the others follow that leader. Chaser cells with Attack, Siphon, Venom, Fearless, or PackHunter move slightly faster."},
 {name:"ColonyDigest",color:"#8cf5bd",desc:"Requires Connect and a living bond. Increases food energy delivered to the colony's hungriest member."},
 {name:"SharedShield",color:"#b9c8e8",desc:"Requires Connect and a living bond. Reduces damage to all bonded colony members."},
 {name:"Relay",color:"#f3a8ff",desc:"Requires Connect. Improves energy transfer to the hungriest connected cell and helps colonies balance energy."},
@@ -111,7 +112,7 @@ const genes=[
 const geneMap=Object.fromEntries(genes.map(g=>[g.name,g]));
 const WILD=genes.map(g=>g.name);
 // Higher weights mean genes are more likely in founder genomes and mutations.
-const geneWeights={Move:5,Glow:4,Split:4,Repair:5,Sense:4,Shell:3.4,Store:4, Pulse:3,Rotate:3,Digest:4,Efficient:5,Sprint:3,Scout:3,Camouflage:2.7,Anchor:2.8,Filter:3.2,Attack:1.5,Siphon:1,Armor:1.7,Spines:1.7,Venom:1,Fearless:1.25,Magnet:3,Recycler:2.5,Regrow:3,Overdrive:.35,Phoenix:.18,Worldshaper:.07,Connect:.9,Herding:3.2,ColonyDigest:1.25,SharedShield:1.1,Relay:.95,ColonyRepair:1.2,Brood:1.3,BondSense:1.6,PackHunter:1.05,Quorum:.9,Beacon:2.2,Spore:2.4,ToxinFilter:1.5,Feeder:2.8,Mimic:2.2,Glider:2.7,Thermal:2.1,ThickMembrane:2.2,Scavenger:2.6,Alarm:1.8,LongReach:2.1,Stabilizer:2.8,Burst:1.9,SporeCloud:1.4};
+const geneWeights={Move:5,Glow:4,Split:4,Repair:5,Sense:4,Shell:3.4,Store:4, Pulse:3,Rotate:3,Digest:4,Efficient:5,Sprint:3,Scout:3,Camouflage:2.7,Anchor:2.8,Filter:3.2,Attack:1.5,Siphon:1,Armor:1.7,Spines:1.7,Venom:1,Fearless:1.25,Magnet:3,Recycler:2.5,Regrow:3,Overdrive:.35,Phoenix:.18,Worldshaper:.07,Connect:.9,Herding:3.2,Chaser:2.8,ColonyDigest:1.25,SharedShield:1.1,Relay:.95,ColonyRepair:1.2,Brood:1.3,BondSense:1.6,PackHunter:1.05,Quorum:.9,Beacon:2.2,Spore:2.4,ToxinFilter:1.5,Feeder:2.8,Mimic:2.2,Glider:2.7,Thermal:2.1,ThickMembrane:2.2,Scavenger:2.6,Alarm:1.8,LongReach:2.1,Stabilizer:2.8,Burst:1.9,SporeCloud:1.4};
 function weightedPick(items){const total=items.reduce((sum,g)=>sum+(geneWeights[g]||1),0);let r=Math.random()*total;for(const g of items){r-=geneWeights[g]||1;if(r<=0)return g}return items[items.length-1]}
 function rarityLabel(g){const w=geneWeights[g]||1;return w>=4.5?'COMMON':w>=3.5?'UNCOMMON':w>=2.5?'RARE':w>=1.2?'EPIC':w>=.3?'LEGENDARY':w>=.15?'MYTHIC':'DIVINE'}
 function rarityColor(g){return ({COMMON:'#9ee5a6',UNCOMMON:'#72b8ff',RARE:'#c084fc',EPIC:'#ff8fc7',LEGENDARY:'#ffd166',MYTHIC:'#ff9d45',DIVINE:'#ff4fd8'})[rarityLabel(g)]||'#9eafcc'}
@@ -203,6 +204,12 @@ function reproduce(c){
 }
 function update(dt){
  simTime+=dt;foodClock+=dt;while(foodClock>=1){foodClock-=1;addFood(foodRate)}
+ // Chaser cells each select their nearest neighbor. Resolve loops so the highest-energy
+ // member of each loop becomes its leader; everyone in that loop follows the leader.
+ const chaserTargets=new Map(),chaserCycleLeader=new Map();
+ for(const c of cells){if(!has(c,"Chaser"))continue;let nearest=null,best=Infinity;for(const other of cells){if(other===c)continue;const d=(other.x-c.x)**2+(other.y-c.y)**2;if(d<best){best=d;nearest=other}}if(nearest)chaserTargets.set(c.id,nearest)}
+ for(const start of cells){if(!has(start,"Chaser")||chaserCycleLeader.has(start.id))continue;const path=[],seen=new Map();let cur=start;while(cur&&has(cur,"Chaser")&&chaserTargets.has(cur.id)){if(seen.has(cur.id)){const cycle=path.slice(seen.get(cur.id));if(cycle.length>1){const leader=cycle.reduce((a,b)=>a.energy>=b.energy?a:b);for(const member of cycle)chaserCycleLeader.set(member.id,leader.id)}break}seen.set(cur.id,path.length);path.push(cur);cur=chaserTargets.get(cur.id)}}
+ function chaserFollowTarget(c){if(!has(c,"Chaser")||chaserCycleLeader.get(c.id)===c.id)return null;let cur=chaserTargets.get(c.id);const seen=new Set([c.id]);while(cur&&has(cur,"Chaser")){if(seen.has(cur.id))return null;seen.add(cur.id);const leaderId=chaserCycleLeader.get(cur.id);if(leaderId!=null)return cells.find(x=>x.id===leaderId)||null;cur=chaserTargets.get(cur.id)}return cur||null}
  // Newborns do not update until next frame.
  for(const c of [...cells]){
   c.age+=dt;c.pulse=Math.max(0,c.pulse-dt);c.venom=Math.max(0,(c.venom||0)-dt);if(c.venom>0)c.energy-=(has(c,"ToxinFilter")?.65:1.8)*dt;if(has(c,"Regrow"))c.energy=Math.min(maxEnergy(c),c.energy+.32*dt);
@@ -213,12 +220,14 @@ function update(dt){
   if(target&&has(c,"Herding")){for(const other of cells){if(other===c||other.speciesId!==c.speciesId||!has(other,"Herding"))continue;const sameFood=Math.hypot(other.x-target.x,other.y-target.y)<detection(other)+18;if(sameFood&&other.energy/maxEnergy(other)<c.energy/maxEnergy(c)-.03){herdWaiting=true;break}}}
   let connectTarget=null;const connectRange=c.age>=3?(has(c,"BondSense")&&has(c,"Connect")?230:(has(c,"Connect")?150:0)):0;let connectBest=connectRange;
   if(connectRange){for(const other of cells){if(other===c||other.age<3||!has(other,"Connect")||linked(c,other))continue;const d=Math.hypot(other.x-c.x,other.y-c.y);if(d<connectBest){connectBest=d;connectTarget=other}}}
-  const speed=herdWaiting?0:moveSpeed(c)*(c.pulse>0?1.65:1)*(has(c,"Burst")&&target?.x!=null?1.18:1)*(c.alarmBoost>0?1.25:1);
-  // A colony moves as one organism: the oldest-ID member leads, and every bonded follower
-  // keeps its position in the formation. The leader actively steers toward food and bonds.
+  const chaserTarget=chaserFollowTarget(c);
+  const aggressiveChaser=has(c,"Attack")||has(c,"Siphon")||has(c,"Venom")||has(c,"Fearless")||has(c,"PackHunter");
+  const speed=herdWaiting?0:moveSpeed(c)*(c.pulse>0?1.65:1)*(has(c,"Burst")&&target?.x!=null?1.18:1)*(c.alarmBoost>0?1.25:1)*(has(c,"Chaser")&&aggressiveChaser?1.12:1);
+  // A colony moves as one organism; otherwise Chaser cells steer toward their resolved target.
   if(isColonyFollower){c.angle=leader.angle;}
   else {
-   if(connectTarget&&!herdWaiting){const desired=Math.atan2(connectTarget.y-c.y,connectTarget.x-c.x);const delta=Math.atan2(Math.sin(desired-c.angle),Math.cos(desired-c.angle));c.angle+=clamp(delta,-dt*2.4,dt*2.4)}
+   if(chaserTarget&&!herdWaiting){const desired=Math.atan2(chaserTarget.y-c.y,chaserTarget.x-c.x);const delta=Math.atan2(Math.sin(desired-c.angle),Math.cos(desired-c.angle));c.angle+=clamp(delta,-dt*2.8,dt*2.8)}
+   else if(connectTarget&&!herdWaiting){const desired=Math.atan2(connectTarget.y-c.y,connectTarget.x-c.x);const delta=Math.atan2(Math.sin(desired-c.angle),Math.cos(desired-c.angle));c.angle+=clamp(delta,-dt*2.4,dt*2.4)}
    else if(target&&!herdWaiting&&(colony.length>1||(has(c,"Sense")&&has(c,"Rotate")))){
     const dx=target.x-c.x,dy=target.y-c.y,desired=Math.atan2(dy,dx);
     const delta=Math.atan2(Math.sin(desired-c.angle),Math.cos(desired-c.angle));
